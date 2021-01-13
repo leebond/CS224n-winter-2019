@@ -9,3 +9,7 @@ conda install gensim
 Homework 1 (only) is a Jupyter Notebook. With the above done you should be able to get underway by typing:
 
 jupyter notebook exploring_word_vectors.ipynb
+
+
+My take on this assignment:
+Should take you no longer than 2 hours to complete this assignment. Introduces co-occurrence matrix as a fundamental hallmark of word similarity. Most time I've spent on devising and writing the co-occurrence matrix answer.
