@@ -17,7 +17,7 @@ def sigmoid(x):
     """
 
     ### YOUR CODE HERE
-
+    s = 1 / (1 + np.exp(-x))
     ### END YOUR CODE
 
     return s
@@ -58,6 +58,22 @@ def naiveSoftmaxLossAndGradient(
     ### This numerically stable implementation helps you avoid issues pertaining
     ### to integer overflow. 
 
+    # similarity metric of outside word vectors (matrix) with center word vector
+    # one for each word 
+    x = np.dot(outsideVectors, centerWordVec) # dim: outsideVectors(V,D) X centerWordVec(D,) = (V,)
+
+    # softmax transforms similarity metric into (loss) likelihood
+    y_hat = softmax(x) # dim: (V,)
+
+    # cross entropy loss of outside word
+    loss = -np.log(y_hat)[outsideWordIdx] # dim: (1,)
+
+    # we have derived the derivative of the gradient of loss function wrt to centerWordVec
+    y_hat[outsideWordIdx] = y_hat[outsideWordIdx] - 1 # dim: (V,)
+    gradCenterVec = np.dot(outsideVectors.T, y_hat) # dim: outsideVectors(D,V) X y_hat:(V,) = (D,) gradient of embeddings of center word should change with cross entropy loss
+    
+    # we have derived the derivative of the gradient of loss function wrt to outsideVectors
+    gradOutsideVecs = np.outer(y_hat, centerWordVec) # dim: (V,) outer (D,) = (V,D) gradient of embeddings of outside words should change with cross entropy loss as well
 
     ### END YOUR CODE
 
@@ -104,9 +120,32 @@ def negSamplingLossAndGradient(
 
     ### YOUR CODE HERE
 
+    # similarity metric of outside word vectors (matrix) with center word vector
+    # one for each word 
+    x = np.dot(outsideVectors, centerWordVec) # dim: outsideVectors (V,D) X centerWordVec (D,) = (V,)
+
     ### Please use your implementation of sigmoid in here.
+    # softmax transforms similarity metric into (loss) likelihood
+    y_hat = sigmoid(x)[outsideWordIdx] # dim: (V,)
+    y_hat_k = sigmoid(-x)[negSampleWordIndices] # dim: (V,)
+    
+    # cross entropy loss of outside word
+    loss = -np.log(y_hat) - np.sum(np.log(y_hat_k)) # dim: (1,)
 
-
+    # we have derived the derivative of the gradient of loss function wrt to centerWordVec
+    gradCenterVec1 = np.dot(-outsideVectors[outsideWordIdx].T, (1-y_hat)) # dim: outsideVectors[outsideWordIdx].T (D,V) X (1-y_hat) (V,) = (D,)
+    gradCenterVec2 = np.dot(outsideVectors[negSampleWordIndices].T, (1-y_hat_k)) # dim: outsideVectors[negSampleWordIndices].T (D,V) X (1-y_hat_k) (V,) = (D,)
+    gradCenterVec = gradCenterVec1 + gradCenterVec2
+    
+    # we have derived the derivative of the gradient of loss function wrt to outsideVectors
+    # gradient of embeddings of outside words should change with cross entropy loss as well
+    # over here we have to do element-wise operations to update each element in gradOutsideVecs
+    gradOutsideVecs = np.zeros(outsideVectors.shape) # dim: (V,D)
+    gradOutsideVecs[outsideWordIdx] -= centerWordVec * (1 - y_hat) # dim: (V,D)
+    
+    gradNegSamplesVec = np.outer((1-y_hat_k), centerWordVec) # dim: (V,) outer (D,) = (V,D)
+    for i, indx in enumerate(negSampleWordIndices):
+        gradOutsideVecs[indx] += gradNegSamplesVec[i] # dim: (V,D)
     ### END YOUR CODE
 
     return loss, gradCenterVec, gradOutsideVecs
@@ -148,7 +187,14 @@ def skipgram(currentCenterWord, windowSize, outsideWords, word2Ind,
     gradOutsideVectors = np.zeros(outsideVectors.shape)
 
     ### YOUR CODE HERE
-
+    centerWord_idx = word2Ind[currentCenterWord]
+    centerWordVec = centerWordVectors[centerWord_idx]
+    for word in outsideWords:
+        outside_id = word2Ind[word]
+        loss_, gradCenter_, gradOutside_ = word2vecLossAndGradient(centerWordVec,outside_id,outsideVectors,dataset)
+        loss += loss_
+        gradCenterVecs[centerWord_idx] += gradCenter_
+        gradOutsideVectors += gradOutside_
     ### END YOUR CODE
 
     return loss, gradCenterVecs, gradOutsideVectors
