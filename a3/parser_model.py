@@ -71,7 +71,11 @@ class ParserModel(nn.Module):
         ###     Linear Layer: https://pytorch.org/docs/stable/nn.html#torch.nn.Linear
         ###     Xavier Init: https://pytorch.org/docs/stable/nn.html#torch.nn.init.xavier_uniform_
         ###     Dropout: https://pytorch.org/docs/stable/nn.html#torch.nn.Dropout
-
+        self.embed_to_hidden = nn.Linear(self.embed_size * self.n_features, hidden_size)
+        self.dropout = nn.Dropout(dropout_prob)
+        self.hidden_to_logits = nn.Linear(hidden_size, n_classes)
+        nn.init.xavier_uniform_(self.embed_to_hidden.weight)
+        nn.init.xavier_uniform_(self.hidden_to_logits.weight)
 
         ### END YOUR CODE
 
@@ -103,7 +107,9 @@ class ParserModel(nn.Module):
         ###  Please see the following docs for support:
         ###     Embedding Layer: https://pytorch.org/docs/stable/nn.html#torch.nn.Embedding
         ###     View: https://pytorch.org/docs/stable/tensors.html#torch.Tensor.view
-
+        tmp = self.pretrained_embeddings(t) # torch.nn.Embedding(num_embeddings, embedding_dim)
+        batch_size = t.size()[0]
+        x = tmp.view(batch_size, tmp.shape[1]*tmp.shape[2])
 
         ### END YOUR CODE
         return x
@@ -141,7 +147,17 @@ class ParserModel(nn.Module):
         ###
         ### Please see the following docs for support:
         ###     ReLU: https://pytorch.org/docs/stable/nn.html?highlight=relu#torch.nn.functional.relu
-
+        x = self.embedding_lookup(t)
+        x = self.embed_to_hidden(x)
+        x = F.relu(x) 
+        '''
+        nn.ReLU() creates an nn.Module which you can add e.g. to an nn.Sequential model. nn.functional.relu on the other 
+        side is just the functional API call to the relu function, so that you can add it e.g. 
+        in your forward method yourself'
+        '''
+        x = self.dropout(x)
+        logits = self.hidden_to_logits(x)
+        
 
         ### END YOUR CODE
         return logits
