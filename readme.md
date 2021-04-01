@@ -8,4 +8,4 @@ Explore assignments completed by me in those folders named
 Stay tuned with me as I complete the assignments biweekly.
 
 Update:
-Currently, I've just completed Week 3's lecture and am starting on the assignment!
+Currently, I've just completed Week 4's lecture and am starting on the assignment!
