@@ -52,7 +52,7 @@ class ModelEmbeddings(nn.Module):
         ###         https://pytorch.org/docs/stable/nn.html#torch.nn.Embedding
         
         # Embedding matrix for all vocabularies in both source target embeddings
-        self.source = nn.Embedding(len(vocab.src) , self.embed_size)
-        self.target = nn.Embedding(len(vocab.tgt) , self.embed_size)
+        self.source = nn.Embedding(len(vocab.src) , self.embed_size, padding_idx=src_pad_token_idx)
+        self.target = nn.Embedding(len(vocab.tgt) , self.embed_size, padding_idx=tgt_pad_token_idx)
 
         ### END YOUR CODE
